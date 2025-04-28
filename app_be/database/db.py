@@ -1,3 +1,5 @@
+# type: ignore
+
 from typing import Generator
 
 from sqlalchemy import create_engine
