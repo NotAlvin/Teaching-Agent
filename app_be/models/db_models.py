@@ -66,7 +66,7 @@ class Content(Base):
     text_content = Column(Text)
     latex_content = Column(Text, nullable=True)
     topic_id = Column(Integer, ForeignKey("topics.id"), index=True)
-    order_index = Column(Integer, default=0)
+    chapter_order = Column(Integer, default=0)
 
     # Relationships
     topic = relationship("Topic", back_populates="contents")

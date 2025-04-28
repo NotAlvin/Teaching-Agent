@@ -118,7 +118,7 @@ class ContentBase(BaseModel):
     text_content: str
     latex_content: Optional[str] = None
     topic_id: int
-    order_index: Optional[int] = 0
+    chapter_order: Optional[int] = 0
 
 
 class ContentCreate(ContentBase):
@@ -131,7 +131,7 @@ class ContentUpdate(BaseModel):
     text_content: Optional[str] = None
     latex_content: Optional[str] = None
     topic_id: Optional[int] = None
-    order_index: Optional[int] = None
+    chapter_order: Optional[int] = None
 
 
 class ContentInDB(ContentBase):
