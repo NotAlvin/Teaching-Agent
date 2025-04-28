@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "teaching-agent"
+version = "0.1.0"
+description = ""
+authors = [
+    "NotAlvin <62137771+NotAlvin@users.noreply.github.com>"
+]
+readme = "README.md"
+python = ">=3.12"
+
+[tool.poetry.dependencies]
+fastapi = ">=0.115.12,<0.116.0"
+pandas = ">=2.2.3,<3.0.0"
+pydantic = ">=2.2.3,<3.0.0"
+sqlalchemy = ">=2.0.40,<3.0.0"
+uvicorn = ">=0.34.2,<0.35.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+isort = "^6.0.1"
+mypy = "^1.15.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+strict = true
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
