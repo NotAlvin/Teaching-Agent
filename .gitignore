@@ -2,6 +2,7 @@
 __pycache__/
 
 # Jupyter Notebook
+*.ipynb
 .ipynb_checkpoints
 
 # Environments
