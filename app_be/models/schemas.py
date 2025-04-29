@@ -1,3 +1,7 @@
+# type: ignore
+
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
@@ -5,6 +9,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, EmailStr
 
 
+# -------- ENUMS --------
 class ContentType(str, Enum):
     lesson = "lesson"
     example = "example"
@@ -24,7 +29,7 @@ class QuestionType(str, Enum):
     open_ended = "open_ended"
 
 
-# User schemas
+# -------- USER SCHEMAS --------
 class UserBase(BaseModel):
     email: EmailStr
     username: str
@@ -40,20 +45,16 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
 
 
-class UserInDB(UserBase):
+class UserOut(UserBase):
     id: int
     is_active: bool
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-class User(UserInDB):
-    pass
-
-
-# Chapter schemas
+# -------- CHAPTER SCHEMAS --------
 class ChapterBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -68,23 +69,19 @@ class ChapterUpdate(BaseModel):
     description: Optional[str] = None
 
 
-class ChapterInDB(ChapterBase):
+class ChapterOut(ChapterBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-class Chapter(ChapterInDB):
-    topics: list["Topic"] = []
-
-
-# Topic schemas
+# -------- TOPIC SCHEMAS --------
 class TopicBase(BaseModel):
     name: str
     description: Optional[str] = ""
     chapter_order: Optional[int] = 0
-    chapter_id: Optional[int] = None  # Added to reference Chapter
+    chapter_id: Optional[int] = None
 
 
 class TopicCreate(TopicBase):
@@ -98,20 +95,14 @@ class TopicUpdate(BaseModel):
     chapter_id: Optional[int] = None
 
 
-class TopicInDB(TopicBase):
-    topic_id: int
+class TopicOut(TopicBase):
+    id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-class Topic(TopicInDB):
-    contents: list["Content"] = []
-    questions: list["Question"] = []
-    chapter: Optional[ChapterInDB] = None  # Reference to the chapter
-
-
-# Content schemas
+# -------- CONTENT SCHEMAS --------
 class ContentBase(BaseModel):
     title: str
     content_type: ContentType
@@ -134,18 +125,14 @@ class ContentUpdate(BaseModel):
     chapter_order: Optional[int] = None
 
 
-class ContentInDB(ContentBase):
-    topic_id: int  # Changed to match SQLAlchemy model
+class ContentOut(ContentBase):
+    id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-class Content(ContentInDB):
-    topic: Optional[TopicInDB] = None
-
-
-# Answer schemas
+# -------- ANSWER SCHEMAS --------
 class AnswerBase(BaseModel):
     text: str
     latex_content: Optional[str] = None
@@ -169,14 +156,14 @@ class AnswerInDB(AnswerBase):
     question_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Answer(AnswerInDB):
     pass
 
 
-# Question schemas
+# -------- QUESTION SCHEMAS --------
 class QuestionBase(BaseModel):
     text: str
     latex_content: Optional[str] = None
@@ -201,15 +188,27 @@ class QuestionInDB(QuestionBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Question(QuestionInDB):
     answers: list[Answer] = []
-    topic: Optional[TopicInDB] = None
+    topic: Optional[TopicOut] = None
 
 
-# UserProgress schemas
+# -------- TOPIC FULL VIEW --------
+class Topic(TopicOut):
+    contents: list[ContentOut] = []
+    questions: list[Question] = []
+    chapter: Optional[ChapterOut] = None
+
+
+# -------- CHAPTER FULL VIEW --------
+class Chapter(ChapterOut):
+    topics: list[Topic] = []
+
+
+# -------- USER PROGRESS SCHEMAS --------
 class UserProgressBase(BaseModel):
     user_id: int
     topic_id: int
@@ -228,15 +227,15 @@ class UserProgressInDB(UserProgressBase):
     completed_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserProgress(UserProgressInDB):
-    user: Optional[User] = None
-    topic: Optional[TopicInDB] = None
+    user: Optional[UserOut] = None
+    topic: Optional[TopicOut] = None
 
 
-# Quiz schemas
+# -------- QUIZ SCHEMAS --------
 class UserAnswerRequest(BaseModel):
     question_id: int
     selected_answer_id: int
@@ -267,12 +266,12 @@ class QuizAttemptInDB(BaseModel):
     score: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class QuizAttempt(QuizAttemptInDB):
     answers: list[UserAnswerResponse] = []
-    user: Optional[User] = None
+    user: Optional[UserOut] = None
 
 
 class QuizResult(BaseModel):
@@ -281,7 +280,7 @@ class QuizResult(BaseModel):
     recommendations: list[dict[str, Any]] = []
 
 
-# Knowledge gap schemas
+# -------- KNOWLEDGE GAP SCHEMAS --------
 class KnowledgeGapBase(BaseModel):
     user_id: int
     topic_id: int
@@ -298,16 +297,16 @@ class KnowledgeGapInDB(KnowledgeGapBase):
     identified_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class KnowledgeGap(KnowledgeGapInDB):
-    user: Optional[User] = None
-    topic: Optional[TopicInDB] = None
+    user: Optional[UserOut] = None
+    topic: Optional[TopicOut] = None
 
 
-# Update forward references
+# -------- FINAL: RESOLVE FORWARD REFS --------
 Chapter.model_rebuild()
 Topic.model_rebuild()
-Content.model_rebuild()
+ContentOut.model_rebuild()
 Question.model_rebuild()
