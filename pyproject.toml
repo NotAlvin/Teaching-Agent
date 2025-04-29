@@ -15,6 +15,10 @@ pydantic = {extras = ["email"], version = "^2.11.3"}
 sqlalchemy = ">=2.0.40,<3.0.0"
 uvicorn = ">=0.34.2,<0.35.0"
 sqlalchemy2-stubs = "^0.0.2a38"
+passlib = "^1.7.4"
+pyjwt = "^2.10.1"
+dotenv = "^0.9.9"
+bcrypt = "^4.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
