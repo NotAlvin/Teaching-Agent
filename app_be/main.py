@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app_be.api import content, users
+from app_be.api import content, quiz, users
 from app_be.database.db import init_db
 
 app = FastAPI(title="Linear Algebra Learning Platform API")
@@ -21,6 +21,7 @@ app.add_middleware(
 # Include routers
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(quiz.router, prefix="/api/quiz", tags=["quiz"])
 
 
 @app.on_event("startup")

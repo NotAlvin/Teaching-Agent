@@ -1,5 +1,7 @@
 # type: ignore
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -9,9 +11,11 @@ from app_be.models.schemas import (
 )
 from app_be.models.schemas import UserOut as UserSchema
 from app_be.models.schemas import (
+    UserProgress,
+    UserProgressCreate,
     UserUpdate,
 )
-from app_be.services import user_service
+from app_be.services import progress_service, user_service
 
 router = APIRouter()
 
@@ -47,6 +51,52 @@ def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user_service.update_user(db=db, user_id=user_id, user=user)
+
+
+@router.get("/users/{user_id}/progress", response_model=list[UserProgress])
+def get_user_progress(
+    user_id: int, topic_id: Optional[int] = None, db: Session = Depends(get_db)
+):
+    """Get all progress records for a user, optionally filtered by topic"""
+    user = user_service.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return progress_service.get_user_progress(db=db, user_id=user_id, topic_id=topic_id)
+
+
+# User progress endpoints
+@router.post(
+    "/users/{user_id}/progress",
+    response_model=UserProgress,
+    status_code=status.HTTP_201_CREATED,
+)
+def record_user_progress(
+    user_id: int, progress: UserProgressCreate, db: Session = Depends(get_db)
+):
+    """Record a new progress entry for a user"""
+    user = user_service.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Ensure the user_id in the path matches the one in the request body
+    if progress.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID in path must match user ID in request body",
+        )
+
+    return progress_service.create_progress(db=db, progress=progress)
+
+
+@router.get("/users/{user_id}/curriculum-progress", response_model=dict)
+def get_curriculum_progress(user_id: int, db: Session = Depends(get_db)):
+    """Get overall curriculum progress statistics for a user"""
+    user = user_service.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return progress_service.get_curriculum_summary(db=db, user_id=user_id)
 
 
 # # -------- Question and Answer endpoints --------
@@ -87,55 +137,6 @@ def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
 #         user_id=user_id,
 #         answer=answer
 #     )
-
-# # User Progress endpoints
-# @router.get("/users/{user_id}/progress", response_model=list[UserProgress])
-# def get_user_progress(
-#     user_id: int,
-#     topic_id: Optional[int] = None,
-#     db: Session = Depends(get_db)
-# ):
-#     """Get all progress records for a user, optionally filtered by topic"""
-#     user = user_service.get_user(db, user_id=user_id)
-#     if user is None:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     return progress_service.get_user_progress(
-#         db=db,
-#         user_id=user_id,
-#         topic_id=topic_id
-#     )
-
-# @router.post("/users/{user_id}/progress",
-#               response_model=UserProgress,
-#               status_code=status.HTTP_201_CREATED)
-# def record_user_progress(
-#     user_id: int,
-#     progress: UserProgressCreate,
-#     db: Session = Depends(get_db)
-# ):
-#     """Record a new progress entry for a user"""
-#     user = user_service.get_user(db, user_id=user_id)
-#     if user is None:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     # Ensure the user_id in the path matches the one in the request body
-#     if progress.user_id != user_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="User ID in path must match user ID in request body"
-#         )
-
-#     return progress_service.create_progress(db=db, progress=progress)
-
-# @router.get("/users/{user_id}/curriculum-progress", response_model=dict)
-# def get_curriculum_progress(user_id: int, db: Session = Depends(get_db)):
-#     """Get overall curriculum progress statistics for a user"""
-#     user = user_service.get_user(db, user_id=user_id)
-#     if user is None:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     return progress_service.get_curriculum_summary(db=db, user_id=user_id)
 
 # # Knowledge Gaps endpoints
 # @router.get("/users/{user_id}/knowledge-gaps", response_model=list[KnowledgeGap])
